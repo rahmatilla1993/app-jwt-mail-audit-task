@@ -19,9 +19,6 @@ public class Manager extends User {
   @ManyToOne
   private Role role;
 
-  @OneToMany
-  private Set<Task> tasks;
-
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
     if (role.getRoleName().name().equals(RoleName.MANAGER.name())) {

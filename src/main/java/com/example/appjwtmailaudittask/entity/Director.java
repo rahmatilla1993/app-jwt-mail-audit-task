@@ -6,10 +6,8 @@ import lombok.EqualsAndHashCode;
 import org.springframework.security.core.GrantedAuthority;
 
 import javax.persistence.Entity;
-import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import java.util.Collection;
-import java.util.Set;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -18,9 +16,6 @@ public class Director extends User {
 
   @OneToOne
   private Company company;
-
-  @OneToMany
-  private Set<Task> tasks;
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {

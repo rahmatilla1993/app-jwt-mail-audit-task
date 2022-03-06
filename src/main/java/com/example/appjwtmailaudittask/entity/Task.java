@@ -25,6 +25,12 @@ public class Task {
 
   private String description;
 
+  @ManyToOne
+  private Director director;
+
+  @ManyToOne
+  private Manager manager;
+
   @Column(nullable = false)
   private Date start_task;
 
