@@ -17,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -40,6 +41,9 @@ public class ManagerService implements UserDetailsService {
 
     @Autowired
     JwtProvider jwtProvider;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
     public List<Manager> getAllManagers() {
         return managerRepository.findAll();
@@ -70,7 +74,7 @@ public class ManagerService implements UserDetailsService {
         manager.setEmail(managerDto.getEmail());
         manager.setFirstName(managerDto.getFirstName());
         manager.setLastName(managerDto.getLastName());
-        manager.setPassword(managerDto.getPassword());
+        manager.setPassword(passwordEncoder.encode(managerDto.getPassword()));
         manager.setEmailCode(UUID.randomUUID().toString());
         manager.setUsername(managerDto.getUsername());
         managerRepository.save(manager);
@@ -115,7 +119,7 @@ public class ManagerService implements UserDetailsService {
 
     public ApiResponse editManagerById(UUID id, ManagerDto managerDto) {
         Optional<Manager> optionalManager = managerRepository.findById(id);
-        if (optionalManager.isPresent()) {
+        if (optionalManager.isEmpty()) {
             return new ApiResponse("Manager not found", false);
         }
         Manager manager = optionalManager.get();

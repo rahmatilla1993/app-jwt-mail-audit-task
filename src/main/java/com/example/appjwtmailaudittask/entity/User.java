@@ -37,7 +37,6 @@ public class User implements UserDetails {
 
   protected String emailCode;
 
-  @Column(nullable = false)
   protected String password;
 
   @Column(nullable = false, unique = true)

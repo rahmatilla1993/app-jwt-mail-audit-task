@@ -24,4 +24,9 @@ public class ApiResponse {
         this.success = success;
         this.object = object;
     }
+
+    public ApiResponse(String message, Object object) {
+        this.message = message;
+        this.object = object;
+    }
 }

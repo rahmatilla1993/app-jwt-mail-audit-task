@@ -5,22 +5,25 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class Turni_Ket {
+public class Employee_Info {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    private Timestamp input_time;
+    @ManyToOne(optional = false)
+    private Employee employee;
 
-    private Timestamp output_time;
+    @Column(nullable = false)
+    private Double salary;
+
+    private Integer month_number;
 
     @ManyToOne
-    private Employee employee;
+    private Task task;
 }
