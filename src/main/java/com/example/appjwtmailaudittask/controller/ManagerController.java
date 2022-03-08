@@ -21,19 +21,19 @@ public class ManagerController {
     @Autowired
     ManagerService managerService;
 
-    @GetMapping
+    @GetMapping("/crud")
     public HttpEntity<?> getAllManagers() {
         List<Manager> managers = managerService.getAllManagers();
         return ResponseEntity.ok(managers);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/crud/{id}")
     public HttpEntity<?> getManagerById(@PathVariable UUID id) {
         ApiResponse response = managerService.getManagerById(id);
         return ResponseEntity.status(response.isSuccess() ? HttpStatus.OK : HttpStatus.NOT_FOUND).body(response);
     }
 
-    @PostMapping("/register")
+    @PostMapping("/crud")
     public HttpEntity<?> addManager(@RequestBody ManagerDto managerDto) {
         ApiResponse response = managerService.addManager(managerDto);
         return ResponseEntity.status(response.isSuccess() ? HttpStatus.CREATED : HttpStatus.CONFLICT).body(response);
@@ -51,15 +51,21 @@ public class ManagerController {
         return ResponseEntity.status(response.isSuccess() ? HttpStatus.OK : HttpStatus.NOT_FOUND).body(response);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/crud/{id}")
     public HttpEntity<?> editManagerById(@PathVariable UUID id, @RequestBody ManagerDto managerDto) {
         ApiResponse response = managerService.editManagerById(id, managerDto);
         return ResponseEntity.status(response.isSuccess() ? HttpStatus.ACCEPTED : HttpStatus.NOT_ACCEPTABLE).body(response);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/crud/{id}")
     public HttpEntity<?> deleteManagerById(@PathVariable UUID id) {
         ApiResponse response = managerService.deleteManagerById(id);
         return ResponseEntity.status(response.isSuccess() ? HttpStatus.ACCEPTED : HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @GetMapping("/task/{emp_id}")
+    public HttpEntity<?> taskForEmployee(@PathVariable UUID emp_id, @RequestParam Integer task_id) {
+        ApiResponse apiResponse = managerService.taskForEmployee(emp_id, task_id);
+        return ResponseEntity.status(apiResponse.isSuccess() ? HttpStatus.OK : HttpStatus.NOT_FOUND).body(apiResponse);
     }
 }

@@ -2,11 +2,11 @@ package com.example.appjwtmailaudittask.service;
 
 import com.example.appjwtmailaudittask.entity.Employee;
 import com.example.appjwtmailaudittask.entity.Manager;
-import com.example.appjwtmailaudittask.payload.ApiResponse;
-import com.example.appjwtmailaudittask.payload.EmployeeDto;
-import com.example.appjwtmailaudittask.payload.LoginDto;
+import com.example.appjwtmailaudittask.entity.Task;
+import com.example.appjwtmailaudittask.payload.*;
 import com.example.appjwtmailaudittask.repository.EmployeeRepository;
 import com.example.appjwtmailaudittask.repository.ManagerRepository;
+import com.example.appjwtmailaudittask.repository.TaskRepository;
 import com.example.appjwtmailaudittask.security.JwtProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
@@ -45,6 +45,9 @@ public class EmployeeService implements UserDetailsService {
     @Autowired
     JwtProvider jwtProvider;
 
+    @Autowired
+    TaskRepository taskRepository;
+
     public List<Employee> getAllEmployees() {
         return employeeRepository.findAll();
     }
@@ -80,7 +83,7 @@ public class EmployeeService implements UserDetailsService {
         String link = "http://localhost:8080/api/employee/verifyEmail?emailCode=" + emailCode + "&email=" + toEmail;
         SimpleMailMessage mailMessage = new SimpleMailMessage();
         mailMessage.setFrom(fromEmail);
-        mailMessage.setText(toEmail);
+        mailMessage.setTo(toEmail);
         mailMessage.setSubject("Message title");
         mailMessage.setText(link);
         javaMailSender.send(mailMessage);
@@ -113,11 +116,68 @@ public class EmployeeService implements UserDetailsService {
         }
     }
 
-    public ApiResponse deleteEmployeeById(UUID id){
+    public ApiResponse deleteEmployeeById(UUID id) {
+        Optional<Employee> optionalEmployee = employeeRepository.findById(id);
+        if (optionalEmployee.isPresent()) {
+            employeeRepository.delete(optionalEmployee.get());
+            return new ApiResponse("Employee deleted", true);
+        }
+        return new ApiResponse("Employee not found", false);
+    }
+
+    public ApiResponse getTaskById(Integer task_id) {
+        Optional<Task> optionalTask = taskRepository.findById(task_id);
+        if (optionalTask.isPresent()) {
+            Task task = optionalTask.get();
+            task.setStatus("Task completed");
+            taskRepository.save(task);
+            Manager manager = managerRepository.getById(task.getCreatedAt());
+            Employee employee = employeeRepository.findByTaskId(task_id);
+            String response = sendResponseToTask(employee.getEmail(), manager.getEmail());
+            return new ApiResponse(true, response);
+        }
+        return new ApiResponse("Task not found", false);
+    }
+
+    private String sendResponseToTask(String fromEmail, String toEmail) {
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setFrom(fromEmail);
+        mailMessage.setTo(toEmail);
+        mailMessage.setSubject("Answer");
+        mailMessage.setText("Task completed");
+        javaMailSender.send(mailMessage);
+        return "Task completed";
+    }
+
+    public ApiResponse editEmployeeById(UUID id, EmployeeEditDto employeeEditDto) {
+        Optional<Employee> optionalEmployee = employeeRepository.findById(id);
+        if (optionalEmployee.isPresent()) {
+            Employee employee = optionalEmployee.get();
+            if (employeeRepository.existsByIdIsNotAndEmail(id, employeeEditDto.getEmail())) {
+                return new ApiResponse("This email already exists", false);
+            }
+            if (employeeRepository.existsByIdIsNotAndUsername(id, employeeEditDto.getUsername())) {
+                return new ApiResponse("This user already exists", false);
+            }
+            employee.setEmail(employeeEditDto.getEmail());
+            employee.setUsername(employeeEditDto.getUsername());
+            employee.setFirstName(employeeEditDto.getFirstName());
+            employee.setLastName(employeeEditDto.getLastName());
+            employee.setPassword(employeeEditDto.getPassword());
+            employeeRepository.save(employee);
+            return new ApiResponse("Employee edited", true);
+        }
+        return new ApiResponse("Employee not found", false);
+    }
+
+    public ApiResponse addSalaryForEmployee(UUID id, EmployeeSalary employeeSalary){
         Optional<Employee> optionalEmployee = employeeRepository.findById(id);
         if(optionalEmployee.isPresent()){
-            employeeRepository.delete(optionalEmployee.get());
-            return new ApiResponse("Employee deleted",true);
+            Employee employee = optionalEmployee.get();
+            employee.setMonth_number(employeeSalary.getMonth_number());
+            employee.setSalary(employeeSalary.getSalary());
+            employeeRepository.save(employee);
+            return new ApiResponse("Salary added",true);
         }
         return new ApiResponse("Employee not found",false);
     }

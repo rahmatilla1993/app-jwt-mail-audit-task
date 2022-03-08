@@ -1,12 +1,10 @@
 package com.example.appjwtmailaudittask.service;
 
-import com.example.appjwtmailaudittask.entity.Manager;
-import com.example.appjwtmailaudittask.entity.Role;
+import com.example.appjwtmailaudittask.entity.*;
 import com.example.appjwtmailaudittask.payload.ApiResponse;
 import com.example.appjwtmailaudittask.payload.LoginDto;
 import com.example.appjwtmailaudittask.payload.ManagerDto;
-import com.example.appjwtmailaudittask.repository.ManagerRepository;
-import com.example.appjwtmailaudittask.repository.RoleRepository;
+import com.example.appjwtmailaudittask.repository.*;
 import com.example.appjwtmailaudittask.security.JwtProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
@@ -20,9 +18,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ManagerService implements UserDetailsService {
@@ -44,6 +44,12 @@ public class ManagerService implements UserDetailsService {
 
     @Autowired
     PasswordEncoder passwordEncoder;
+
+    @Autowired
+    TaskRepository taskRepository;
+
+    @Autowired
+    EmployeeRepository employeeRepository;
 
     public List<Manager> getAllManagers() {
         return managerRepository.findAll();
@@ -162,5 +168,38 @@ public class ManagerService implements UserDetailsService {
             }
         }
         throw new UsernameNotFoundException("Manager not found");
+    }
+
+    public ApiResponse taskForEmployee(UUID emp_id, Integer task_id) {
+        Optional<Task> optionalTask = taskRepository.findById(task_id);
+        if (optionalTask.isPresent()) {
+            return new ApiResponse("Task not found", false);
+        }
+        Optional<Employee> optionalEmployee = employeeRepository.findById(emp_id);
+        if (optionalEmployee.isPresent()) {
+            return new ApiResponse("Employee not found", false);
+        }
+        Employee employee = optionalEmployee.get();
+        Task task = optionalTask.get();
+        if (task.getStatus().equals("In process") || task.getStatus().equals("Task completed")) {
+            return new ApiResponse("This task has been assigned or completed to another employee", false);
+        }
+        task.setStatus("In process");
+        taskRepository.save(task);
+        employee.setTasks(Collections.singleton(task));
+        employeeRepository.save(employee);
+        Manager manager = managerRepository.getById(task.getCreatedAt());
+        String sendTask = sendTask(manager.getEmail(), employee.getEmail(), task);
+        return new ApiResponse("The task was assigned to the employee", true, sendTask);
+    }
+
+    private String sendTask(String fromEmail, String toEmail, Task task) {
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setFrom(fromEmail);
+        mailMessage.setTo(toEmail);
+        mailMessage.setSubject("Task");
+        mailMessage.setText(task.getName());
+        javaMailSender.send(mailMessage);
+        return "Task sent";
     }
 }

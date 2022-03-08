@@ -10,7 +10,10 @@ import org.springframework.security.core.GrantedAuthority;
 
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
+import javax.persistence.OneToMany;
 import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
@@ -19,14 +22,22 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 public class Employee extends User {
 
-  @CreationTimestamp
-  private UUID createdBy;
+    @CreationTimestamp
+    private UUID createdBy;
 
-  @UpdateTimestamp
-  private UUID updatedBy;
+    @UpdateTimestamp
+    private UUID updatedBy;
 
-  @Override
-  public Collection<? extends GrantedAuthority> getAuthorities() {
-    return RoleName.EMPLOYEE.getAuthorities();
-  }
+    private Double salary;
+
+    //for salary
+    private Integer month_number;
+
+    @OneToMany
+    private Set<Task> tasks;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return RoleName.EMPLOYEE.getAuthorities();
+    }
 }
